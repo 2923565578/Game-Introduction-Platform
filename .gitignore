@@ -25,3 +25,6 @@ data/
 
 # local screenshot
 preview_ui.png
+
+# local e-mail draft (not part of the repository)
+Email_To_Instructor.md
