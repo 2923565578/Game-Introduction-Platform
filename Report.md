@@ -202,19 +202,22 @@ Both lifetime rules are enforced by executable code, not by comments. The purge 
 
 ## 5. Bonus Work
 
-Two extra deliverables were added beyond the base requirement.
+Extra work was added beyond the base requirement, in three layers: the interface, the
+upload/streaming pipeline, and the documentation.
 
-### 5.1 Web front end (Flask + HTML)
+### 5.1 Web front end — full video platform
 
-Files: `app.py`, `templates/index.html`.
+Files: `app.py`, `templates/index.html`, `static/css/app.css`, `static/js/app.js`.
 
-`app.py` reuses the classes from `streamy_core.py`. It builds one demo TV show with two actors and one episode, then exposes three routes:
+The bonus layer is a complete browser interface for the platform, not a test page:
 
-- `GET /` renders the page.
-- `GET /api/media-info` returns title, year, network, season count and actor names as JSON.
-- `GET /api/play/<token>` calls the original `play_media()` method and returns the boolean result.
+- **Header:** logo, view tabs (Home / Films / TV Shows / With video), live search over titles, genres and actors, upload button and user chip.
+- **Featured hero:** the backdrop of the current title, type badge, year, seasons or runtime, cast, synopsis, and two actions (play, architecture demo).
+- **Platform ledger:** live counters for titles, titles with a video file, aggregated actors and storage used, read from `/api/stats`.
+- **Catalogue grid:** 2:3 poster cards. A real poster image is used when one was uploaded; otherwise the card draws a gradient generated from a hash of the title plus the first letter, so every card looks intentional without fake artwork.
+- **Filtering:** nav view, genre chips and search combine, and the list re-sorts by creation time.
 
-The page shows the media card and two buttons: *Use Expired Token* and *Use Valid Token*. Each button calls the API and prints the JSON result on screen. So the sequence-diagram logic can be tested in a browser, not only in the terminal.
+The page is rendered entirely from JSON; nothing is hard-coded in the HTML except the shell.
 
 Run:
 
@@ -227,7 +230,28 @@ Open `http://127.0.0.1:5000`.
 
 Important note: `app.py` does not duplicate any business logic. The authorization rule still lives only in `Title.play_media()`. The web layer is a thin adapter.
 
-### 5.2 Source repair and documentation
+### 5.2 Upload and streaming pipeline
+
+Upload is a real file transfer, not a mock:
+
+1. The browser posts `multipart/form-data` to `POST /api/upload`: the video, an optional poster image, and the metadata fields (title, year, kind, genre, actors, minutes or seasons, network, synopsis).
+2. `app.py` validates the extension against `mp4 / webm / ogv / mov / m4v / mkv`, stores the file under `uploads/` with a UUID name, rejects anything over 4 GB, and appends a record to `data/media.json`.
+3. The domain object for that record is rebuilt immediately (`build_title`), so the new title can be played at once, not after a restart.
+4. Upload progress is driven by `XMLHttpRequest.upload.onprogress`, so the bar reflects bytes on the wire, not a fake timer.
+
+Streaming uses HTTP range requests:
+
+- `GET /media/<file>` serves the file with `conditional=True`, so the response is `206 Partial Content`.
+- Because of that the player can seek; a plain full-file response would force a download from byte zero every time.
+
+The token gate in the player is wired to the domain logic:
+
+- Clicking *Authorize* calls `POST /api/play/<id>` with the token.
+- The server captures the `print()` output of `Title.play_media()` with `contextlib.redirect_stdout` and returns it with the decision.
+- The five authorization lines therefore appear under the player as they were written in the lab, not as re-typed UI text.
+- Any non-empty token returns `True` and a stream URL; an empty token or the literal `EXPIRED_TOKEN` returns `401 Unauthorized`, exactly the rule from the lab.
+
+### 5.3 Source repair and documentation
 
 The code printed in the lab PDF was broken by page wrapping: methods were cut across lines, the `def __init__` lines were wrong, and one `clear()` method was misplaced. The delivered `streamy_core.py` is the repaired version, and `python -m py_compile` proves it is valid.
 
@@ -247,9 +271,9 @@ Three technical points were proven by execution rather than by description:
 
 The playback flow returns the correct boolean for both paths, and the printed log matches the five steps of the sequence diagram.
 
-Working with Git branches and pull requests showed the delivery side of engineering: code is written on a feature branch, reviewed, merged, and then the branch is removed. The bonus Flask layer showed that a UI can be added on top of unchanged domain code, which is the practical meaning of separation between business logic and presentation.
+Working with Git branches and pull requests showed the delivery side of engineering: code is written on a feature branch, reviewed, merged, and then the branch is removed. The bonus layer showed that a full interface, a file pipeline and an upload form can be added on top of unchanged domain code: `play_media()` was never rewritten for the web, which is the practical meaning of separation between business logic and presentation.
 
-Limitation: storage is in-memory lists only. There is no database and no real token service, so this work verifies architecture and logic, not production durability.
+Limitation: the catalogue is a JSON file and the token check is a two-branch condition. There is no database, no real token service and no user account, so this work verifies architecture, logic and delivery, not production security or durability.
 
 ---
 
@@ -258,12 +282,17 @@ Limitation: storage is in-memory lists only. There is no database and no real to
 | File | Purpose |
 |---|---|
 | `streamy_core.py` | domain classes, production logic, integration test |
-| `app.py` | Flask entry point, three routes |
-| `templates/index.html` | bonus web page |
+| `app.py` | Flask adapter: catalogue, upload, streaming, token gate, purge demo |
+| `templates/index.html` | page shell |
+| `static/css/app.css` | dark cinema theme |
+| `static/js/app.js` | rendering, upload progress, player and token gate |
+| `data/media.json` | catalogue, created on first start |
+| `uploads/` | uploaded videos and posters; only `demo_stream.mp4` ships with the repo |
 | `Report.md` | this report |
+| `Lab10-11_Report_XUHAOJIE_DTR5N0.docx` | the same report as a Word document |
 | `Bonus.md` | bonus feature document for the instructor |
 | `README.md` | repository front page and run guide |
-| `.gitignore` | excludes `__pycache__` and local IDE files |
+| `.gitignore` | excludes `__pycache__`, `uploads/` and `data/` |
 
 ## Appendix B — How to run
 
@@ -279,7 +308,11 @@ pip install flask
 python app.py
 ```
 
-Environment: Python 3.8 or newer. No other dependency is needed for the core test.
+Environment: Python 3.8 or newer. The core test needs nothing else; the web layer needs `flask`.
+
+On a fresh clone, `data/media.json` does not exist yet. The first start seeds two demo
+titles and attaches the bundled `uploads/demo_stream.mp4`, so the player works before
+anything is uploaded.
 
 ## Appendix C — UML class diagram
 
