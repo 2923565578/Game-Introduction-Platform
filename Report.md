@@ -292,7 +292,7 @@ Limitation: the catalogue is a JSON file and the token check is a two-branch con
 | `Lab10-11_Report_XUHAOJIE_DTR5N0.docx` | the same report as a Word document |
 | `Bonus.md` | bonus feature document for the instructor |
 | `README.md` | repository front page and run guide |
-| `.gitignore` | excludes `__pycache__`, `uploads/` and `data/` |
+| `.gitignore` | excludes `__pycache__`, `data/`, user uploads (only `uploads/demo_stream.mp4` is kept) and local drafts |
 
 ## Appendix B — How to run
 
