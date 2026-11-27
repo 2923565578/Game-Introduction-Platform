@@ -1,58 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Streamy Film Platform - Bonus UI</title>
-    <style>
-        body{font-family:Arial;max-width:800px;margin:30px auto;padding:0 20px;}
-        .card{border:1px solid #ccc;padding:20px;border-radius:10px;margin:15px 0;}
-        button{padding:8px 16px;margin:5px;cursor:pointer;}
-        pre{background:#efefef;padding:10px;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streamy — Video Streaming Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff2d55'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='white'/%3E%3C/svg%3E">
 </head>
 <body>
-    <h1>🎬 Streamy Video Platform (Bonus Web UI)</h1>
-    <div class="card">
-        <h3>Media Information</h3>
-        <div id="info-block">Loading...</div>
-        <button onclick="loadInfo()">Refresh Media Info</button>
+
+<header class="topbar">
+  <div class="logo">
+    <span class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M8 5l11 7-11 7z" fill="#fff"/></svg>
+    </span>
+    STREAMY
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" data-view="home">Home</button>
+    <button class="nav-item" data-view="films">Films</button>
+    <button class="nav-item" data-view="shows">TV Shows</button>
+    <button class="nav-item" data-view="mine">With video</button>
+  </nav>
+
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+    <input id="search" type="search" placeholder="Search titles, actors, genres…" autocomplete="off">
+  </div>
+
+  <button class="btn btn-primary" id="openUpload">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
+    Upload video
+  </button>
+
+  <div class="avatar" title="XUHAOJIE · DTR5N0">XH</div>
+</header>
+
+<main class="shell">
+
+  <section class="hero" id="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-veil"></div>
+    <div class="hero-body">
+      <div class="eyebrow" id="heroKind">Featured</div>
+      <h1 id="heroTitle">Loading…</h1>
+      <div class="hero-meta" id="heroMeta"></div>
+      <p class="hero-desc" id="heroDesc"></p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="heroPlay">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>
+          Play now
+        </button>
+        <button class="btn btn-ghost" id="heroLab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M9 8l5 3-5 3z"/></svg>
+          Architecture demo
+        </button>
+      </div>
     </div>
 
-    <div class="card">
-        <h3>Playback Authorization Test</h3>
-        <p>Test token：<br>Valid: <code>VALID_STREAM_TOKEN_2026</code><br>Expired: <code>EXPIRED_TOKEN</code></p>
-        <button onclick="testExpired()">Use Expired Token</button>
-        <button onclick="testValid()">Use Valid Token</button>
-        <div><h4>Result:</h4><pre id="play-result"></pre></div>
+    <aside class="hero-panel">
+      <h4>Platform ledger</h4>
+      <div class="ledger-row"><span>Titles</span><b id="statTitles">—</b></div>
+      <div class="ledger-row"><span>With video file</span><b id="statVideos">—</b></div>
+      <div class="ledger-row"><span>Actors (aggregated)</span><b id="statActors">—</b></div>
+      <div class="ledger-row"><span>Storage used</span><b id="statStorage">—</b></div>
+    </aside>
+  </section>
+
+  <div class="section-head">
+    <h2>Catalogue</h2>
+    <span class="rule"></span>
+    <span class="count" id="countLabel">0 titles</span>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <section class="grid" id="grid"></section>
+
+  <div class="footer">
+    <span>Streamy — GEIAL314-B2a bonus front end · XUHAOJIE (DTR5N0)</span>
+    <span>Domain logic served by streamy_core.py</span>
+  </div>
+</main>
+
+<div class="overlay" id="playerOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="playerTitle">Title</h3>
+        <div class="sub" id="playerSub"></div>
+      </div>
+      <button class="icon-btn" data-close="playerOverlay" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
 
-<script>
-async function loadInfo(){
-    const res = await fetch("/api/media-info");
-    const json = await res.json();
-    document.getElementById("info-block").innerHTML = `
-        <p>Title: ${json.name}</p>
-        <p>Release Year: ${json.release_year}</p>
-        <p>Network: ${json.network}</p>
-        <p>Season count: ${json.seasons_count}</p>
-        <p>Actors: ${json.actors.join(", ")}</p>
-    `
-}
+    <div class="stage" id="stage">
+      <video id="video" controls playsinline preload="metadata"></video>
 
-async function playTest(token){
-    const res = await fetch(`/api/play/${token}`);
-    const json = await res.json();
-    document.getElementById("play-result").innerText = JSON.stringify(json,null,2)
-}
+      <div class="gate" id="gate">
+        <div class="gate-inner">
+          <div class="lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ff8c9c" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+          </div>
+          <h4>Playback authorization required</h4>
+          <p>This gate is the sequence diagram from Lab 11: <code>play_media(token)</code> returns
+             <strong>200 OK</strong> for any non-empty token, and <strong>401 Unauthorized</strong>
+             for an empty token or <code>EXPIRED_TOKEN</code>.<br>
+             A default token is filled in — just press Authorize.</p>
+          <div class="token-row">
+            <input id="tokenInput" type="text" placeholder="PLAYBACK_TOKEN" spellcheck="false">
+            <button class="btn btn-primary" id="authorize">Authorize</button>
+          </div>
+          <div class="quick">
+            <button data-token="VALID_STREAM_TOKEN_2026">VALID_STREAM_TOKEN_2026</button>
+            <button data-token="EXPIRED_TOKEN">EXPIRED_TOKEN</button>
+            <button data-token="">empty</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-function testExpired(){
-    playTest("EXPIRED_TOKEN")
-}
-function testValid(){
-    playTest("VALID_STREAM_TOKEN_2026")
-}
+    <pre class="log" id="playLog">// authorization trace will appear here</pre>
 
-window.onload = loadInfo;
-</script>
+    <div class="meta-strip" id="playerMeta"></div>
+  </div>
+</div>
+
+<div class="overlay" id="uploadOverlay">
+  <div class="modal" style="width:min(720px,100%)">
+    <div class="modal-head">
+      <div>
+        <h3>Upload video</h3>
+        <div class="sub">The file is stored locally, then registered in the catalogue</div>
+      </div>
+      <button class="icon-btn" data-close="uploadOverlay" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <form class="form" id="uploadForm">
+      <label class="dropzone" id="dropzone">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ff8c9c" stroke-width="2"><path d="M12 16V5"/><path d="M7.5 9.5L12 5l4.5 4.5"/><path d="M4 19h16"/></svg>
+        </div>
+        <h4>Drag a video here, or click to browse</h4>
+        <p>MP4 · WEBM · MOV · MKV · M4V — up to 4 GB</p>
+        <div class="dz-file" id="dzFile"></div>
+        <input id="videoFile" name="video" type="file" accept="video/*,.mkv" hidden>
+      </label>
+
+      <div class="fields">
+        <div class="field">
+          <label for="fTitle">Title</label>
+          <input id="fTitle" name="title" type="text" placeholder="Leave empty to use the file name">
+        </div>
+        <div class="field">
+          <label for="fYear">Year</label>
+          <input id="fYear" name="year" type="number" min="1888" max="2100" value="2026">
+        </div>
+        <div class="field">
+          <label for="fKind">Type</label>
+          <select id="fKind" name="kind">
+            <option value="film">Film</option>
+            <option value="show">TV Show</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fGenre">Genre</label>
+          <input id="fGenre" name="genre" type="text" placeholder="Drama" list="genreList">
+          <datalist id="genreList">
+            <option value="Action"></option>
+            <option value="Comedy"></option>
+            <option value="Drama"></option>
+            <option value="Documentary"></option>
+            <option value="Sci-Fi"></option>
+            <option value="Thriller"></option>
+            <option value="Animation"></option>
+          </datalist>
+        </div>
+        <div class="field">
+          <label for="fActors">Actors (comma separated)</label>
+          <input id="fActors" name="actors" type="text" placeholder="Name One, Name Two">
+        </div>
+        <div class="field">
+          <label for="fMinutes">Minutes (film)</label>
+          <input id="fMinutes" name="minutes" type="number" min="0" max="600" placeholder="118">
+        </div>
+        <div class="field">
+          <label for="fSeasons">Seasons (TV show)</label>
+          <input id="fSeasons" name="seasons" type="number" min="0" max="40" placeholder="1">
+        </div>
+        <div class="field">
+          <label for="fNetwork">Network / studio</label>
+          <input id="fNetwork" name="network" type="text" placeholder="Streamy Originals">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fDesc">Synopsis</label>
+        <textarea id="fDesc" name="description" placeholder="One or two lines shown on the title card…"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="fPoster">Poster image (optional)</label>
+        <input id="fPoster" name="poster" type="file" accept="image/*">
+      </div>
+
+      <div class="progress" id="progress"><i id="progressBar"></i></div>
+
+      <div class="form-foot">
+        <button class="btn btn-primary" type="submit" id="submitUpload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></svg>
+          Publish
+        </button>
+        <button class="btn btn-quiet" type="reset">Clear</button>
+        <span class="hint" id="uploadHint">No file selected</span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="lab" id="lab">
+  <div class="lab-head">
+    <h4>Architecture lab</h4>
+    <span class="sub">Lab 10 / Lab 11 evidence</span>
+    <button class="icon-btn" id="labClose" aria-label="Close" style="margin-left:auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="lab-body">
+    <div class="lab-note">
+      <b>Composition (*--)</b> — a Season and its Episodes cannot outlive their TV Show.
+      Purging the show must clear the children.<br><br>
+      <b>Aggregation (o--)</b> — an Actor exists on its own. Purging the show must leave the actor records intact.
+    </div>
+    <div class="lab-actions">
+      <button class="btn btn-danger" id="runPurge">Purge a TV show</button>
+      <button class="btn btn-ghost" id="runPlay">Replay token test</button>
+    </div>
+    <pre class="lab-log" id="labLog">// select a TV show, then press “Purge a TV show”</pre>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/js/app.js"></script>
 </body>
 </html>

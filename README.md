@@ -1,42 +1,71 @@
-# Film-Platform (Streamy Video Streaming Backend)
+# Streamy — Video Streaming Platform
 
 Lab assignment for **GEIAL314-B2a Software Technology Practical Lab**, University of Miskolc.
 
 - **Student:** XUHAOJIE
 - **Neptun code:** DTR5N0
-- **Labs:** Lab 10 (UML to Python skeleton) + Lab 11 (logic integration, architectural verification, system delivery)
+- **Labs:** Lab 10 (UML → Python skeletons) + Lab 11 (logic integration, architectural verification, delivery)
+- **Bonus:** a full web front end with a real catalogue, video upload and a streaming player
 
-This repository implements the object-oriented backend of a video streaming platform, converted from the UML domain model to Python skeleton code and then to full functional logic.
+## What this is
+
+The repository contains the object-oriented backend of a video streaming platform,
+translated from the UML domain model into Python, plus a browser front end built on
+top of it. No business rule is duplicated in the UI: every playback decision still
+comes from `Title.play_media()` inside `streamy_core.py`.
+
+## Features
+
+| Area | What it does |
+|---|---|
+| Catalogue | Cards with poster, year, genre, runtime/seasons, actor list |
+| Filtering | Nav views (Films / TV Shows / With video), genre chips, live search |
+| Upload | Drag & drop or browse, optional poster, metadata form, progress bar |
+| Playback | Token gate, authorization log streaming in real time, HTML5 player with seek |
+| Lab demo | One-click purge to show composition cascade + aggregation survival |
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `streamy_core.py` | Main source: 8 domain classes, production logic, integration test simulation |
-| `app.py` | Flask entry point for the bonus web UI (3 routes) |
-| `templates/index.html` | Bonus web page |
-| `Report.md` | Lab 10 & Lab 11 English lab report |
-| `Report_Lab10_Lab11_XUHAOJIE_DTR5N0.docx` | Same report as a Word document |
+| `streamy_core.py` | 8 domain classes, production logic, integration test |
+| `app.py` | Flask adapter: catalogue, upload, streaming, purge demo |
+| `templates/index.html` | Page structure |
+| `static/css/app.css` | Dark cinema theme |
+| `static/js/app.js` | Rendering, token gate, upload progress |
+| `data/media.json` | Catalogue (created on first start) |
+| `uploads/` | Uploaded videos and posters |
+| `Report.md` / `*.docx` | Lab 10 & Lab 11 report |
 | `Bonus.md` | Bonus feature document for the instructor |
-| `.gitignore` | Excludes `__pycache__` and local IDE files |
 
-## Run locally
+## Run
 
 ```bash
-# 1. Syntax check (Lab 10 evidence)
-python -m py_compile streamy_core.py
-
-# 2. Core integration test (Lab 11 evidence)
-python streamy_core.py
-
-# 3. Optional bonus web UI
 pip install flask
 python app.py
 ```
 
-`python streamy_core.py` runs the architectural verification simulation and prints runtime logs for the authorization flow, the composition cascade delete, and the aggregation check.
+Then open <http://127.0.0.1:5000>.
 
-`python app.py` starts a local web server at `http://127.0.0.1:5000`, where the same `play_media()` logic can be tested with a valid and an expired token.
+The core lab evidence still runs on its own:
+
+```bash
+python -m py_compile streamy_core.py
+python streamy_core.py
+```
+
+## HTTP API
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/catalog` | All titles |
+| GET | `/api/stats` | Counts, actor ledger, storage used |
+| POST | `/api/upload` | Multipart upload: `video`, optional `poster`, metadata |
+| POST | `/api/play/<id>` | JSON `{"token": ...}` → authorization decision + trace |
+| POST | `/api/purge/<id>` | Composition cascade on a TV show |
+| DELETE | `/api/media/<id>` | Remove a title and its files |
+| GET | `/media/<file>` | Video stream, HTTP range supported |
+| GET | `/poster/<file>` | Poster image |
 
 ## Architecture
 

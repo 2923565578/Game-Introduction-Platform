@@ -14,3 +14,14 @@ Thumbs.db
 
 # Office temp lock files
 ~$*
+
+# Runtime data: user uploads and the catalogue stay local.
+# Only the small demo clip ships with the repo so the player works on a
+# fresh clone; the catalogue is re-seeded automatically on first start.
+uploads/*
+!uploads/demo_stream.mp4
+
+data/
+
+# local screenshot
+preview_ui.png
