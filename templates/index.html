@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Streamy Film Platform - Bonus UI</title>
+    <style>
+        body{font-family:Arial;max-width:800px;margin:30px auto;padding:0 20px;}
+        .card{border:1px solid #ccc;padding:20px;border-radius:10px;margin:15px 0;}
+        button{padding:8px 16px;margin:5px;cursor:pointer;}
+        pre{background:#efefef;padding:10px;}
+    </style>
+</head>
+<body>
+    <h1>🎬 Streamy Video Platform (Bonus Web UI)</h1>
+    <div class="card">
+        <h3>Media Information</h3>
+        <div id="info-block">Loading...</div>
+        <button onclick="loadInfo()">Refresh Media Info</button>
+    </div>
+
+    <div class="card">
+        <h3>Playback Authorization Test</h3>
+        <p>Test token：<br>Valid: <code>VALID_STREAM_TOKEN_2026</code><br>Expired: <code>EXPIRED_TOKEN</code></p>
+        <button onclick="testExpired()">Use Expired Token</button>
+        <button onclick="testValid()">Use Valid Token</button>
+        <div><h4>Result:</h4><pre id="play-result"></pre></div>
+    </div>
+
+<script>
+async function loadInfo(){
+    const res = await fetch("/api/media-info");
+    const json = await res.json();
+    document.getElementById("info-block").innerHTML = `
+        <p>Title: ${json.name}</p>
+        <p>Release Year: ${json.release_year}</p>
+        <p>Network: ${json.network}</p>
+        <p>Season count: ${json.seasons_count}</p>
+        <p>Actors: ${json.actors.join(", ")}</p>
+    `
+}
+
+async function playTest(token){
+    const res = await fetch(`/api/play/${token}`);
+    const json = await res.json();
+    document.getElementById("play-result").innerText = JSON.stringify(json,null,2)
+}
+
+function testExpired(){
+    playTest("EXPIRED_TOKEN")
+}
+function testValid(){
+    playTest("VALID_STREAM_TOKEN_2026")
+}
+
+window.onload = loadInfo;
+</script>
+</body>
+</html>
